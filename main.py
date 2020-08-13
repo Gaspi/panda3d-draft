@@ -1,7 +1,8 @@
 import random
 from direct.showbase.ShowBase import ShowBase
 from direct.gui.OnscreenText import OnscreenText
-from panda3d.core import PerspectiveLens, TextNode
+from panda3d.core import PerspectiveLens, TextNode, TextureStage, \
+    TexGenAttrib
 
 def add_instructions(pos, msg):
     """Function to put instructions on the screen."""
@@ -51,6 +52,15 @@ class Game(ShowBase):
         self.camera.setPos(-9, -0.5, 1)
         self.heading = -95.0
         self.pitch = 0.0
+
+        # Load level geometry
+        self.level_model = self.loader.loadModel('models/level')
+        self.level_model.reparentTo(self.render)
+        self.level_model.setTexGen(TextureStage.getDefault(),
+                                   TexGenAttrib.MWorldPosition)
+        self.level_model.setTexProjector(TextureStage.getDefault(),
+                                         self.render, self.level_model)
+        self.level_model.setTexScale(TextureStage.getDefault(), 4)
 
         # Main loop
         self.taskMgr.add(self.update, 'main loop')
