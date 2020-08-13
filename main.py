@@ -4,7 +4,7 @@ from direct.gui.OnscreenText import OnscreenText
 from panda3d.core import PerspectiveLens, TextNode, TextureStage, \
     TexGenAttrib
 
-def add_instructions(pos, msg):
+def add_msg(pos, msg):
     """Function to put instructions on the screen."""
     return OnscreenText(text=msg, style=1, fg=(1, 1, 1, 1), shadow=(0, 0, 0, 1),
                         parent=base.a2dTopLeft, align=TextNode.ALeft,
@@ -23,13 +23,20 @@ class Game(ShowBase):
 
         # Display instructions
         add_title("Panda3D Simple Game")
-        add_instructions(0.06, "[Esc]: Quit")
-        add_instructions(0.12, "[E]: Move Forward")
-        add_instructions(0.18, "[S]: Move Left")
-        add_instructions(0.24, "[F]: Move Right")
-        add_instructions(0.30, "[D]: Move Back")
-        add_instructions(0.36, "[R]: Jump")
-        add_instructions(0.42, "Arrow Keys: Look Around")
+        add_msg(0.06, "[Esc]: Quit")
+        add_msg(0.12, "[E]: Move Forward")
+        add_msg(0.18, "[S]: Move Left")
+        add_msg(0.24, "[F]: Move Right")
+        add_msg(0.30, "[D]: Move Back")
+        add_msg(0.36, "[R]: Jump")
+        add_msg(0.42, "Arrow Keys: Look Around")
+
+        self.msg_cam_x = add_msg(0.48, "x=0")
+        self.msg_cam_y = add_msg(0.54, "y=0")
+        self.msg_cam_z = add_msg(0.60, "z=0")
+        self.msg_cam_h = add_msg(0.66, "h=0")
+        self.msg_cam_p = add_msg(0.72, "p=0")
+        self.msg_cam_r = add_msg(0.78, "r=0")
 
         # Setup controls
         self.keys = {}
@@ -72,6 +79,14 @@ class Game(ShowBase):
         """Stores a value associated with a key."""
         self.keys[key] = value
 
+    def update_msg(self):
+        self.msg_cam_x.text = "x=" + str(self.camera.getX())
+        self.msg_cam_y.text = "y=" + str(self.camera.getY())
+        self.msg_cam_z.text = "z=" + str(self.camera.getZ())
+        self.msg_cam_h.text = "h=" + str(self.camera.getH())
+        self.msg_cam_p.text = "p=" + str(self.camera.getP())
+        self.msg_cam_r.text = "r=" + str(self.camera.getR())
+
     def update(self, task):
         """Updates the camera based on the keyboard input. Once this is
         done, then the CellManager's update function is called."""
@@ -84,6 +99,7 @@ class Game(ShowBase):
         self.pitch += (dt * 90 * self.keys['arrow_up'] +
                        dt * 90 * -self.keys['arrow_down'])
         self.camera.setHpr(self.heading, self.pitch, 0)
+        self.update_msg()
         return task.cont
 
 
