@@ -76,7 +76,6 @@ class Game(ShowBase):
         pass
 
     def push_key(self, key, value):
-        """Stores a value associated with a key."""
         self.keys[key] = value
 
     def update_msg(self):
@@ -88,16 +87,13 @@ class Game(ShowBase):
         self.msg_cam_r.text = "r=" + str(self.camera.getR())
 
     def update(self, task):
-        """Updates the camera based on the keyboard input. Once this is
-        done, then the CellManager's update function is called."""
+        """ Updates the camera based on the keyboard input. """
         dt = globalClock.getDt()
-        dx = dt * 3 * -self.keys['s'] + dt * 3 * self.keys['f']
-        dz = dt * 3 * self.keys['d'] + dt * 3 * -self.keys['e']
-        self.camera.setPos(self.camera, dx, -dz, 0)
-        self.heading += (dt * 90 * self.keys['arrow_left'] +
-                         dt * 90 * -self.keys['arrow_right'])
-        self.pitch += (dt * 90 * self.keys['arrow_up'] +
-                       dt * 90 * -self.keys['arrow_down'])
+        dx = 3 * dt * (self.keys['f']-self.keys['s'])
+        dz = 3 * dt * (self.keys['d']-self.keys['e'])
+        self.camera.setPos(self.camera, dx, -dz, 0) # Set position with relation to itself: move
+        self.heading += 90 * dt * (self.keys['arrow_left']-self.keys['arrow_right'])
+        self.pitch   += 90 * dt * (self.keys['arrow_up']  -self.keys['arrow_down'] )
         self.camera.setHpr(self.heading, self.pitch, 0)
         self.update_msg()
         return task.cont
