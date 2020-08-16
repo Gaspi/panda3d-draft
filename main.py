@@ -4,6 +4,8 @@ from direct.gui.OnscreenText import OnscreenText
 from panda3d.core import PerspectiveLens, TextNode, TextureStage, \
     TexGenAttrib
 
+from hex import Point, Triangle
+
 def add_msg(pos, msg):
     """Function to put instructions on the screen."""
     return OnscreenText(text=msg, style=1, fg=(1, 1, 1, 1), shadow=(0, 0, 0, 1),
@@ -15,6 +17,18 @@ def add_title(text):
     return OnscreenText(text=text, style=1, pos=(-0.1, 0.09), scale=.08,
                         parent=base.a2dBottomRight, align=TextNode.ARight,
                         fg=(1, 1, 1, 1), shadow=(0, 0, 0, 1))
+
+def createTerrain():
+    form = GeomVertexFormat.getV3()
+    vertex = GeomVertexWriter(vdata, 'vertex')
+    vertex.addData3f(1, 0, 0)
+    prim = GeomTriangles(Geom.UHStatic)
+    prim.addVertices(v1, v2, v3)
+    geom = Geom(vdata)
+    geom.addPrimitive(prim)
+    node = GeomNode('gnode')
+    node.addGeom(geom)
+    nodePath = render.attachNewNode(node)
 
 class Game(ShowBase):
     """Sets up the game, camera, controls, and loads models."""
