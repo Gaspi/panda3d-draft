@@ -1,10 +1,66 @@
 import random
+from sets import Set
 from direct.showbase.ShowBase import ShowBase
 from direct.gui.OnscreenText import OnscreenText
 from panda3d.core import PerspectiveLens, TextNode, TextureStage, \
     TexGenAttrib
 
-from hex import Point, Triangle
+from hex import Point, Triangle, Hex
+
+
+
+class HexTerrainBuilder:
+    def __init__(self):
+        self.pt_count = 0
+        self.pt_list = []
+        self.pt_map = dict()
+        self.tri_map = dict()
+
+    def addPoint(self,pt):
+        if pt in self.pt_map:
+            return self.pt_map[pt][0]
+        else:
+            self.pt_map[pt] = (self.count, None)
+            self.pt_list.append( (pt,None) )
+            self.count += 1
+            return self.count
+
+    def setPoint(self,pt,data):
+        if pt in self.m2:
+            ptid = self.m2[pt][0]
+            self.m2[pt] = (ptid, data)
+            self.m1[ptid] = (pt,data)
+        else:
+            self.m2[pt] = (self.count, data)
+            self.m1.append( (pt,data) )
+            self.count += 1
+
+    def addTriangle(self,t):
+        if t not in self.tri_map:
+            self.tri_map[t] = [ self.addPoint(pt) for pt in t.getVertices ]
+
+    def export(self):
+        form = GeomVertexFormat.getV3()
+        vdata = GeomVertexData('data', form, Geom.UHDynamic)
+
+        vertex = GeomVertexWriter(vdata, 'vertex')
+        for (pt,data) in self.pt_list:
+            vertex.addData3f(pt.x, pt.y, data)
+
+        prim = GeomTriangles(Geom.UHStatic)
+        for (a,b,c) in self.tri_map:
+            prim.addVertices(a,b,c)
+        return (vdata,prim)
+        #geom = Geom(vdata)
+        #geom.addPrimitive(prim)
+        #node = GeomNode('gnode')
+        #node.addGeom(geom)
+        #nodePath = render.attachNewNode(node)
+
+    def addPoint(self,pt,data):
+        self.m1 pt[]
+
+
 
 def add_msg(pos, msg):
     """Function to put instructions on the screen."""
@@ -17,18 +73,6 @@ def add_title(text):
     return OnscreenText(text=text, style=1, pos=(-0.1, 0.09), scale=.08,
                         parent=base.a2dBottomRight, align=TextNode.ARight,
                         fg=(1, 1, 1, 1), shadow=(0, 0, 0, 1))
-
-def createTerrain():
-    form = GeomVertexFormat.getV3()
-    vertex = GeomVertexWriter(vdata, 'vertex')
-    vertex.addData3f(1, 0, 0)
-    prim = GeomTriangles(Geom.UHStatic)
-    prim.addVertices(v1, v2, v3)
-    geom = Geom(vdata)
-    geom.addPrimitive(prim)
-    node = GeomNode('gnode')
-    node.addGeom(geom)
-    nodePath = render.attachNewNode(node)
 
 class Game(ShowBase):
     """Sets up the game, camera, controls, and loads models."""
