@@ -1,13 +1,10 @@
 import random
-from sets import Set
 from direct.showbase.ShowBase import ShowBase
 from direct.gui.OnscreenText import OnscreenText
 from panda3d.core import PerspectiveLens, TextNode, TextureStage, \
     TexGenAttrib
 
 from hex import Point, Triangle, Hex
-
-
 
 class HexTerrainBuilder:
     def __init__(self):
@@ -17,35 +14,34 @@ class HexTerrainBuilder:
         self.tri_map = dict()
 
     def addPoint(self,pt):
-        if pt in self.pt_map:
-            return self.pt_map[pt][0]
-        else:
+        if pt not in self.pt_map:
             self.pt_map[pt] = (self.count, None)
             self.pt_list.append( (pt,None) )
             self.count += 1
-            return self.count
+        return self.pt_map[pt][0]
 
     def setPoint(self,pt,data):
-        if pt in self.m2:
-            ptid = self.m2[pt][0]
-            self.m2[pt] = (ptid, data)
-            self.m1[ptid] = (pt,data)
-        else:
-            self.m2[pt] = (self.count, data)
-            self.m1.append( (pt,data) )
-            self.count += 1
+        ptid = self.addPoint(pt)
+        self.pt_map[pt] = (ptid, data)
+        self.pt_list[ptid] = (pt,data)
 
     def addTriangle(self,t):
         if t not in self.tri_map:
-            self.tri_map[t] = [ self.addPoint(pt) for pt in t.getVertices ]
+            self.tri_map[t] = [ self.addPoint(pt) for pt in t.getVertices() ]
+
+    def addHex(self,h):
+        for t in getTriangles():
+            self.addTriangle(t)
 
     def export(self):
-        form = GeomVertexFormat.getV3()
+        form = GeomVertexFormat.getV3c4()
         vdata = GeomVertexData('data', form, Geom.UHDynamic)
 
         vertex = GeomVertexWriter(vdata, 'vertex')
+        color  = GeomVertexWriter(vdata, 'color')
         for (pt,data) in self.pt_list:
-            vertex.addData3f(pt.x, pt.y, data)
+            vertex.addData3f(pt.x, pt.y, 1)
+            color.addData4f(1,0,0,1)
 
         prim = GeomTriangles(Geom.UHStatic)
         for (a,b,c) in self.tri_map:
@@ -56,10 +52,6 @@ class HexTerrainBuilder:
         #node = GeomNode('gnode')
         #node.addGeom(geom)
         #nodePath = render.attachNewNode(node)
-
-    def addPoint(self,pt,data):
-        self.m1 pt[]
-
 
 
 def add_msg(pos, msg):
@@ -129,6 +121,19 @@ class Game(ShowBase):
 
         # Main loop
         self.taskMgr.add(self.update, 'main loop')
+
+    def generate():
+        tb = HexTerrainBuilder()
+        for h in hexCircle( Hex(0,0), 1):
+            tb.addHex(h)
+        (vdata,prim) = tb.export()
+        self.vdata = vdata
+        self.prim = prim
+        self.geom = Geom(vdata)
+        self.geom.addPrimitive(self.prim)
+        self.node = GeomNode('gnode')
+        self.node.addGeom(self.geom)
+        self.nodePath = self.render.attachNewNode(self.node)
 
     def jump(self):
         pass
