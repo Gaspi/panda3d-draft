@@ -73,9 +73,9 @@ class Triangle:
         i = self.i
         j3 = 3*self.j
         if self.isDown():
-            return [ Point(i-1,j3+3 ), Point(i+1,j3+3), Point(i,j3) ]
+            return [ Point(i+1,j3+3 ), Point(i-1,j3+3), Point(i,j3) ]
         else:
-            return [ Point(i+1,j3 ), Point(i-1,j3), Point(i,j3+3) ]
+            return [ Point(i-1,j3 ), Point(i+1,j3), Point(i,j3+3) ]
 
     def getEdges(self):
         v = self.getVertices()
@@ -125,7 +125,7 @@ class Hex:
         m = self.j - (n+(self.i%2)+1)//2 - h.j
         return (n,m)
     def path_NE_SE(self,h):
-        m = h.j - self.j + self.i//2 - (h.i-1)//2
+        m = h.j - self.j + (self.i-1)//2 - (h.i-1)//2
         n = h.i - self.i + m
         return (n,m)
     def dist(self,h):
