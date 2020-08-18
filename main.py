@@ -1,102 +1,18 @@
 import random
 from direct.showbase.ShowBase import ShowBase
 from direct.gui.OnscreenText import OnscreenText
-from panda3d.core import PerspectiveLens, TextNode, TextureStage, \
-    TexGenAttrib, GeomVertexFormat, GeomVertexData, \
-    GeomTriangles, GeomLines, \
-    Geom, GeomVertexWriter, GeomNode
-from pandac.PandaModules import Material, VBase4
+from panda3d.core import PerspectiveLens, TextNode, TextureStage, TexGenAttrib,\
+    Geom, GeomNode
 
 from hex import *
+from terrain import TerrainBuilder
 
-class HexTerrainBuilder:
-    def __init__(self,dx,dy):
-        self.dx = dx
-        self.dy = dy / math.sqrt(3)
-        self.pt_count = 0
-        self.pt_list = []
-        self.pt_map = dict()
-        self.tri_map = dict()
-        self.edge_map = dict()
-        self.hexedge_map = dict()
-
-    def addPoint(self,pt):
-        if pt not in self.pt_map:
-            self.pt_map[pt] = (self.pt_count, None)
-            self.pt_list.append( (pt,None) )
-            self.pt_count += 1
-        return self.pt_map[pt][0]
-
-    def setPoint(self,pt,data):
-        ptid = self.addPoint(pt)
-        self.pt_map[pt] = (ptid, data)
-        self.pt_list[ptid] = (pt,data)
-
-    def addTriangle(self,t):
-        if t not in self.tri_map:
-            self.tri_map[t] = [ self.addPoint(pt) for pt in t.getVertices() ]
-            for e in t.getEdges():
-                self.addEdge(e)
-
-    def addEdge(self,edge):
-        if edge not in self.edge_map:
-            self.edge_map[edge] = ( self.addPoint(edge.a), self.addPoint(edge.b) )
-
-    def addHexEdge(self,edge):
-        if edge not in self.hexedge_map:
-            self.hexedge_map[edge] = ( self.addPoint(edge.a), self.addPoint(edge.b) )
-
-    def addHex(self,h):
-        for t in h.getTriangles():
-            self.addTriangle(t)
-        for e in h.getEdges():
-            self.addHexEdge(e)
-
-    def exportPoints(self):
-        vdata = GeomVertexData('data', GeomVertexFormat.getV3(), Geom.UHDynamic)
-        vertex = GeomVertexWriter(vdata, 'vertex')
-        for (pt,data) in self.pt_list:
-            vertex.addData3f(self.dx*pt.x, self.dy*pt.y, 0)
-        return vdata
-
-    def exportSurfaceNode(self):
-        vdata = self.exportPoints()
-        geom = Geom(vdata)
-
-        prim = GeomTriangles(Geom.UHStatic)
-        for t in self.tri_map.values():
-            prim.addVertices( t[0] , t[1] , t[2] )
-        geom.addPrimitive(prim)
-
-        node = GeomNode('surface')
-        node.addGeom(geom)
-        return node
-
-    def exportEdgesNode(self):
-        vdata = self.exportPoints()
-        geom = Geom(vdata)
-
-        prim = GeomLines(Geom.UHStatic)
-        for t in self.edge_map.values():
-            prim.addVertices(t[0], t[1])
-        geom.addPrimitive(prim)
-
-        node = GeomNode('edges')
-        node.addGeom(geom)
-        return node
-
-    def exportHexEdgesNode(self):
-        vdata = self.exportPoints()
-        geom = Geom(vdata)
-
-        prim = GeomLines(Geom.UHStatic)
-        for t in self.hexedge_map.values():
-            prim.addVertices(t[0], t[1])
-        geom.addPrimitive(prim)
-
-        node = GeomNode('edges')
-        node.addGeom(geom)
-        return node
+def nodeOfPrim(vdata,prim,name):
+    geom = Geom(vdata)
+    geom.addPrimitive(prim)
+    node = GeomNode(name)
+    node.addGeom(geom)
+    return node
 
 def add_msg(pos, msg):
     """Function to put instructions on the screen."""
@@ -155,30 +71,30 @@ class Game(ShowBase):
         self.pitch = 0.0
 
         # Load level geometry
-        #self.level_model = self.loader.loadModel('models/level')
-        #self.level_model.reparentTo(self.render)
-        #self.level_model.setTexGen(TextureStage.getDefault(),
-        #                           TexGenAttrib.MWorldPosition)
-        #self.level_model.setTexProjector(TextureStage.getDefault(),
-        #                                 self.render, self.level_model)
-        #self.level_model.setTexScale(TextureStage.getDefault(), 4)
-
         self.generate()
 
         # Main loop
         self.taskMgr.add(self.update, 'main loop')
 
     def generate(self):
-        tb = HexTerrainBuilder(1.,1.)
-        for h in hexCircle( Hex(0,0), 2):
-            tb.addHex(h)
-        self.surface = self.render.attachNewNode(tb.exportSurfaceNode())
+        hexes = hexCircle( Hex(0,0), 2)
+        triangles = [t  for h in hexes for t in h.getTriangles()]
+        terrain = TerrainBuilder(1.,1.)
+        surface = terrain.surfaceOfHexes(hexes)
+        borders = terrain.linesOfHexes(hexes)
+        lines   = terrain.linesOfTriangles(triangles)
+        vdata = terrain.export((lambda x:0))
+
+        self.surface = self.render.attachNewNode(
+            nodeOfPrim(vdata,surface,"surface"))
         self.surface.setColor(0,0,1,1)
 
-        self.edges = self.render.attachNewNode(tb.exportEdgesNode())
+        self.edges = self.render.attachNewNode(
+            nodeOfPrim(vdata,lines,"lines"))
         self.edges.setColor(1,0,0,1)
 
-        self.hexedges = self.render.attachNewNode(tb.exportHexEdgesNode())
+        self.hexedges = self.render.attachNewNode(
+            nodeOfPrim(vdata,borders,"borders"))
         self.hexedges.setColor(0,1,0,1)
         self.hexedges.setRenderModeThickness(4)
 

@@ -9,6 +9,10 @@ class Point:
         return "Point(%d,%d)" % (self.x, self.y)
     def __str__(self):
         return "(%d,%d)" % (self.x, self.y)
+    def __hash__(self):
+        return hash( (self.x,self.y) )
+    def __eq__(self,other):
+        return (self.x,self.y) == (other.x,other.y)
     def isVertex(self):
         return self.y % 3 == 0 and (self.x + self.y // 3) % 2 == 0
     def isCenter(self):
@@ -37,6 +41,8 @@ class Point:
         return math.sqrt(self.d2(pt))
     def d1(self,pt):
         return abs(self.x-pt.x) + abs(self.y-pt.y)
+    def getVertices(self):
+        return [ self ]
 
 class Edge:
     __slots__ = ['a', 'b']
@@ -47,6 +53,8 @@ class Edge:
         return "Edge(%d,%d)" % (self.a, self.b)
     def __str__(self):
         return "(%d -> %d)" % (self.a, self.b)
+    def getVertices(self):
+        return [a,b]
 
 # Triangle (0,0) is facing down with center (0,2)
 #  - vertices are (-1,3) , (1,3) , (0,0)
