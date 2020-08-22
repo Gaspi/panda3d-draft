@@ -2,11 +2,11 @@ from hex import *
 from panda3d.core import GeomVertexFormat, GeomVertexData, Geom, GeomVertexWriter,\
     GeomTriangles, GeomLines
 
-class TerrainBuilder:
 
-    def __init__(self,dx,dy):
-        self.dx = dx
-        self.dy = dy / math.sqrt(3)
+class TerrainBuilder:
+    def __init__(self,xscale,yscale,deltarand):
+        self.dx = xscale
+        self.dy = yscale / math.sqrt(3)
         self.pt_count = 0
         self.pt_list = []
         self.pt_map = dict()
@@ -18,7 +18,6 @@ class TerrainBuilder:
         return self.pt_map[pt]
 
     def export(self,heightMap):
-        print(self.pt_map)
         vdata = GeomVertexData('data', GeomVertexFormat.getV3(), Geom.UHDynamic)
         vertex = GeomVertexWriter(vdata, 'vertex')
         for pt in self.pt_list:
@@ -29,7 +28,6 @@ class TerrainBuilder:
         prim = GeomTriangles(Geom.UHStatic)
         for t in triangles:
             v = t.getVertices()
-            print(self.get(v[0]), self.get(v[1]), self.get(v[2]) )
             prim.addVertices(self.get(v[0]), self.get(v[1]), self.get(v[2]))
         return prim
 

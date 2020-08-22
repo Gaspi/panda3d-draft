@@ -53,6 +53,10 @@ class Edge:
         return "Edge(%d,%d)" % (self.a, self.b)
     def __str__(self):
         return "(%d -> %d)" % (self.a, self.b)
+    def __hash__(self):
+        return hash( (self.a,self.b) )
+    def __eq__(self,other):
+        return (self.a,self.b) == (other.a,other.b)
     def getVertices(self):
         return [a,b]
 
@@ -68,6 +72,10 @@ class Triangle:
         return "Triangle(%d,%d)" % (self.i, self.j)
     def __str__(self):
         return self.__repr__()
+    def __hash__(self):
+        return hash( (self.i,self.j) )
+    def __eq__(self,other):
+        return (self.i,self.j) == (other.i,other.j)
 
     def isDown(self):
         return (self.i ^ self.j) % 2 == 0
@@ -119,6 +127,10 @@ class Hex:
         return "Hex(%d,%d)" % (self.i, self.j)
     def __str__(self):
         return self.__repr__()
+    def __hash__(self):
+        return hash( (self.i,self.j) )
+    def __eq__(self,other):
+        return (self.i,self.j) == (other.i,other.j)
 
 
     # NE: i + n, j + (n + (i%2)    )//2
@@ -143,7 +155,6 @@ class Hex:
         return min( abs(dnen[0])+abs(dnen[1]),
                     abs(dsen[0])+abs(dsen[1]),
                     abs(dnese[0])+abs(dnese[1]) )
-
 
     def _center(self):
         return (3*self.i, 6*self.j + 3*(self.i%2))
@@ -192,13 +203,3 @@ def hexGrid(i0,irange,j0,jrange):
 def hexCircle(center,radius):
     return [ h for h in hexGrid(center.i-radius,2*radius+1,center.j-radius,2*radius+1)
              if center.dist(h) <= radius ]
-
-
-# Unit tests
-h = Hex(0,0)
-for i in range(100):
-    h = h.getAdjacents()[ random.randrange(0,6) ]
-    for t in h.getTriangles():
-        for v in t.getVertices():
-            assert( v.isVertex() )
-        assert(t.getCenter().isCenter())

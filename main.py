@@ -1,11 +1,18 @@
-import random
 from direct.showbase.ShowBase import ShowBase
 from direct.gui.OnscreenText import OnscreenText
 from panda3d.core import PerspectiveLens, TextNode, TextureStage, TexGenAttrib,\
     Geom, GeomNode
 
 from hex import *
+from gamemap import *
 from terrain import TerrainBuilder
+
+xscale=1.
+yscale=1.
+zscale=2.
+true_yscale = yscale / math.sqrt(3)
+
+deltarand = 0.2 * min(2*xscale,3*true_yscale)
 
 def nodeOfPrim(vdata,prim,name):
     geom = Geom(vdata)
@@ -66,9 +73,9 @@ class Game(ShowBase):
         lens.setNear(0.01)
         lens.setFar(1000.0)
         self.cam.node().setLens(lens)
-        self.camera.setPos(0, 0, 1)
-        self.heading = -95.0
-        self.pitch = 0.0
+        self.camera.setPos(0, 0, 3)
+        self.heading = 0.0
+        self.pitch   = 0.0
 
         # Load level geometry
         self.generate()
@@ -77,13 +84,12 @@ class Game(ShowBase):
         self.taskMgr.add(self.update, 'main loop')
 
     def generate(self):
-        hexes = hexCircle( Hex(0,0), 2)
-        triangles = [t  for h in hexes for t in h.getTriangles()]
-        terrain = TerrainBuilder(1.,1.)
-        surface = terrain.surfaceOfHexes(hexes)
-        borders = terrain.linesOfHexes(hexes)
-        lines   = terrain.linesOfTriangles(triangles)
-        vdata = terrain.export((lambda x:0))
+        gamemap = GameMap(zscale)
+        terrain = TerrainBuilder(xscale,yscale,deltarand)
+        surface = terrain.surfaceOfHexes( gamemap.getHexes() )
+        borders = terrain.linesOfHexes( gamemap.getHexes() )
+        lines   = terrain.linesOfTriangles( gamemap.getTriangles() )
+        vdata = terrain.export( gamemap.heightMap )
 
         self.surface = self.render.attachNewNode(
             nodeOfPrim(vdata,surface,"surface"))
