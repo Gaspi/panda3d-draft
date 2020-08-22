@@ -9,10 +9,21 @@ from terrain import TerrainBuilder
 
 xscale=1.
 yscale=1.
-zscale=2.
+zscale=0.
 true_yscale = yscale / math.sqrt(3)
+radiusmap=6
 
-deltarand = 0.2 * min(2*xscale,3*true_yscale)
+deltarand = 0.4 * min(2*xscale,3*true_yscale)
+
+def trianglePos(x,y):
+    (dx,rx) = divmod(x /       xscale , 1.)
+    (dy,ry) = divmod(y / (3. * true_yscale), 1.)
+    i = int(dx)
+    j = int(dy)
+    ysep = ry if (i^j)%2 == 0 else 1-ry
+    return ( i+1 if rx > ysep else i , j)
+
+
 
 def nodeOfPrim(vdata,prim,name):
     geom = Geom(vdata)
@@ -38,22 +49,22 @@ class Game(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
 
-        # Display instructions
         add_title("Panda3D Simple Game")
-        add_msg(0.06, "[Esc]: Quit")
-        add_msg(0.12, "[E]: Move Forward")
-        add_msg(0.18, "[S]: Move Left")
-        add_msg(0.24, "[F]: Move Right")
-        add_msg(0.30, "[D]: Move Back")
-        add_msg(0.36, "[R]: Jump")
-        add_msg(0.42, "Arrow Keys: Look Around")
-
+        # Display instructions
+        #add_msg(0.06, "[Esc]: Quit")
+        #add_msg(0.12, "[E]: Move Forward")
+        #add_msg(0.18, "[S]: Move Left")
+        #add_msg(0.24, "[F]: Move Right")
+        #add_msg(0.30, "[D]: Move Back")
+        #add_msg(0.36, "[R]: Jump")
+        #add_msg(0.42, "Arrow Keys: Look Around")
         self.msg_cam_x = add_msg(0.48, "x=0")
         self.msg_cam_y = add_msg(0.54, "y=0")
         self.msg_cam_z = add_msg(0.60, "z=0")
-        self.msg_cam_h = add_msg(0.66, "h=0")
-        self.msg_cam_p = add_msg(0.72, "p=0")
-        self.msg_cam_r = add_msg(0.78, "r=0")
+        self.msg_cam   = add_msg(0.66, "tri=(0,0)")
+        #self.msg_cam_h = add_msg(0.66, "h=0")
+        #self.msg_cam_p = add_msg(0.72, "p=0")
+        #self.msg_cam_r = add_msg(0.78, "r=0")
 
         # Setup controls
         self.keys = {}
@@ -73,7 +84,7 @@ class Game(ShowBase):
         lens.setNear(0.01)
         lens.setFar(1000.0)
         self.cam.node().setLens(lens)
-        self.camera.setPos(0, 0, 3)
+        self.camera.setPos(0, 0, zscale)
         self.heading = 0.0
         self.pitch   = 0.0
 
@@ -84,7 +95,8 @@ class Game(ShowBase):
         self.taskMgr.add(self.update, 'main loop')
 
     def generate(self):
-        gamemap = GameMap(zscale)
+        gamemap = GameMap(radiusmap,zscale)
+        gamemap.erode()
         terrain = TerrainBuilder(xscale,yscale,deltarand)
         surface = terrain.surfaceOfHexes( gamemap.getHexes() )
         borders = terrain.linesOfHexes( gamemap.getHexes() )
@@ -115,9 +127,10 @@ class Game(ShowBase):
         self.msg_cam_x.text = "x=" + str(self.camera.getX())
         self.msg_cam_y.text = "y=" + str(self.camera.getY())
         self.msg_cam_z.text = "z=" + str(self.camera.getZ())
-        self.msg_cam_h.text = "h=" + str(self.camera.getH())
-        self.msg_cam_p.text = "p=" + str(self.camera.getP())
-        self.msg_cam_r.text = "r=" + str(self.camera.getR())
+        self.msg_cam.text = "tri=" + str(trianglePos(self.camera.getX(), self.camera.getY()))
+        #self.msg_cam_h.text = "h=" + str(self.camera.getH())
+        #self.msg_cam_p.text = "p=" + str(self.camera.getP())
+        #self.msg_cam_r.text = "r=" + str(self.camera.getR())
 
     def update(self, task):
         """ Updates the camera based on the keyboard input. """

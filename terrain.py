@@ -1,7 +1,7 @@
 from hex import *
+import random
 from panda3d.core import GeomVertexFormat, GeomVertexData, Geom, GeomVertexWriter,\
     GeomTriangles, GeomLines
-
 
 class TerrainBuilder:
     def __init__(self,xscale,yscale,deltarand):
@@ -10,6 +10,7 @@ class TerrainBuilder:
         self.pt_count = 0
         self.pt_list = []
         self.pt_map = dict()
+        self.deltarand = deltarand
 
     def get(self,pt):
         if pt not in self.pt_map:
@@ -21,7 +22,10 @@ class TerrainBuilder:
         vdata = GeomVertexData('data', GeomVertexFormat.getV3(), Geom.UHDynamic)
         vertex = GeomVertexWriter(vdata, 'vertex')
         for pt in self.pt_list:
-            vertex.addData3f(self.dx*pt.x, self.dy*pt.y, heightMap(pt) )
+            vertex.addData3f(
+                self.dx*pt.x, # + self.deltarand*(0.5-random.random()),
+                self.dy*pt.y, # + self.deltarand*(0.5-random.random()),
+                heightMap(pt) )
         return vdata
 
     def surfaceOfTriangles(self,triangles):
