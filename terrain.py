@@ -4,9 +4,10 @@ from panda3d.core import GeomVertexFormat, GeomVertexData, Geom, GeomVertexWrite
     GeomTriangles, GeomLines
 
 class TerrainBuilder:
-    def __init__(self,xscale,yscale,deltarand):
+    def __init__(self,xscale,yscale,deltarand,defaultz=0):
         self.dx = xscale
         self.dy = yscale / math.sqrt(3)
+        self.defaultz = defaultz
         self.pt_count = 0
         self.pt_list = []
         self.pt_map = dict()
@@ -14,18 +15,24 @@ class TerrainBuilder:
 
     def get(self,pt):
         if pt not in self.pt_map:
-            self.pt_map[pt] = len(self.pt_list)
+            self.pt_map[pt] = [ len(self.pt_list), self.defaultz ]
             self.pt_list.append(pt)
-        return self.pt_map[pt]
+        return self.pt_map[pt][0]
 
-    def export(self,heightMap):
+    def setHeight(self,pt,z):
+        self.pt_map[pt][1] = z
+    def setHeightMap(self,heightMap):
+        for pt in self.pt_map:
+            self.pt_map[pt][1] = heightMap(pt)
+
+    def export(self):
         vdata = GeomVertexData('data', GeomVertexFormat.getV3(), Geom.UHDynamic)
         vertex = GeomVertexWriter(vdata, 'vertex')
         for pt in self.pt_list:
             vertex.addData3f(
                 self.dx*pt.x, # + self.deltarand*(0.5-random.random()),
                 self.dy*pt.y, # + self.deltarand*(0.5-random.random()),
-                heightMap(pt) )
+                self.pt_map[pt][1] )
         return vdata
 
     def surfaceOfTriangles(self,triangles):

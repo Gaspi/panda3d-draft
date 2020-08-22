@@ -93,6 +93,10 @@ class Triangle:
         else:
             return [ Point(i-1,j3 ), Point(i+1,j3), Point(i,j3+3) ]
 
+    def getBase(self):
+        j3 = 3*self.j + (0 if self.isDown() else 3)
+        return (Point(self.i+1,j3), Point(self.i-1,j3))
+
     def getEdges(self):
         v = self.getVertices()
         return [ Edge(v[i],v[(i+1)%3]) for i in range(3) ]

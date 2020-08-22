@@ -9,11 +9,15 @@ from terrain import TerrainBuilder
 
 xscale=1.
 yscale=1.
-zscale=0.
+zscale=10.
 true_yscale = yscale / math.sqrt(3)
 radiusmap=6
 
 deltarand = 0.4 * min(2*xscale,3*true_yscale)
+
+hexes = hexCircle( Hex(0,0), radiusmap)
+gamemap = HexMap(hexes,zscale)
+gamemap.erode()
 
 def trianglePos(x,y):
     (dx,rx) = divmod(x /       xscale , 1.)
@@ -21,9 +25,12 @@ def trianglePos(x,y):
     i = int(dx)
     j = int(dy)
     ysep = ry if (i^j)%2 == 0 else 1-ry
-    return ( i+1 if rx > ysep else i , j)
+    return ( Triangle(i+1,j),rx-1,ry) if rx > ysep else ( Triangle(i,j),rx,ry)
 
-
+def getZ(x,y):
+    (t,rx,ry) = trianglePos(x,y)
+    (z0,vx,vy) = gamemap.getTriGrad(t)
+    return z0 + rx*vx + ry*vy
 
 def nodeOfPrim(vdata,prim,name):
     geom = Geom(vdata)
@@ -95,13 +102,12 @@ class Game(ShowBase):
         self.taskMgr.add(self.update, 'main loop')
 
     def generate(self):
-        gamemap = GameMap(radiusmap,zscale)
-        gamemap.erode()
         terrain = TerrainBuilder(xscale,yscale,deltarand)
-        surface = terrain.surfaceOfHexes( gamemap.getHexes() )
-        borders = terrain.linesOfHexes( gamemap.getHexes() )
-        lines   = terrain.linesOfTriangles( gamemap.getTriangles() )
-        vdata = terrain.export( gamemap.heightMap )
+        surface = terrain.surfaceOfHexes( gamemap.hexz.keys() )
+        borders = terrain.linesOfHexes( gamemap.hexz.keys() )
+        lines   = terrain.linesOfTriangles( gamemap.triz )
+        terrain.setHeightMap( gamemap.getPtZ )
+        vdata = terrain.export()
 
         self.surface = self.render.attachNewNode(
             nodeOfPrim(vdata,surface,"surface"))
@@ -116,7 +122,6 @@ class Game(ShowBase):
         self.hexedges.setColor(0,1,0,1)
         self.hexedges.setRenderModeThickness(4)
 
-
     def jump(self):
         pass
 
@@ -127,7 +132,7 @@ class Game(ShowBase):
         self.msg_cam_x.text = "x=" + str(self.camera.getX())
         self.msg_cam_y.text = "y=" + str(self.camera.getY())
         self.msg_cam_z.text = "z=" + str(self.camera.getZ())
-        self.msg_cam.text = "tri=" + str(trianglePos(self.camera.getX(), self.camera.getY()))
+        self.msg_cam.text = "tri=" + str(getZ(self.camera.getX(), self.camera.getY()))
         #self.msg_cam_h.text = "h=" + str(self.camera.getH())
         #self.msg_cam_p.text = "p=" + str(self.camera.getP())
         #self.msg_cam_r.text = "r=" + str(self.camera.getR())

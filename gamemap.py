@@ -1,28 +1,37 @@
 import random
 from hex import *
 
-class GameMap():
+class HexMap():
+    def __init__(self,hexes,zscale):
+        self.hexz = { h : zscale*random.random() for h in hexes }
+        self.triz = [t for h in self.hexz for t in h.getTriangles()]
 
-    def __init__(self,radius,zscale):
-        self.hexes = hexCircle( Hex(0,0), radius)
-        self.heights = { h : zscale*random.random() for h in self.hexes }
+    def getHexZ(self,h):
+        return self.hexz[h] if h in self.hexz else 0
 
-    def getHexes(self):
-        return self.hexes
-    def getTriangles(self):
-        return [t  for h in self.getHexes() for t in h.getTriangles()]
-
-    def heightOfHex(self,h):
-        return self.heights[h] if h in self.heights else 0
-    def heightMap(self,pt):
+    def getPtZ(self,pt):
         i = (pt.x + 1) // 3
         j = pt.y // 6
-        return self.heightOfHex( Hex(i,j) )
+        return self.getHexZ( Hex(i,j) )
+
+    def getTriZ(self,t):
+        (a,b) = t.getBase()
+        (self.getPtZ(a) + self.getPtZ(b)) / 2.
+
+    def getTriGrad(self,t):
+        vs = t.getVertices()
+        a = vs[0]
+        b = vs[1]
+        c = vs[2]
+        z0 = (self.getPtZ(a) + self.getPtZ(b)) / 2.
+        vx = (self.getPtZ(a) - self.getPtZ(b)) / 2.
+        vy = z0 - self.getPtZ(c)
+        return (z0,vx,vy) if t.isDown() else (z0,-vx,-vy)
 
     def _erode(self,h):
         return (
-            4*self.heightOfHex(h) +
-            sum([ self.heightOfHex(a) for a in h.getAdjacents()])
+            4*self.getHexZ(h) +
+            sum([ self.getHexZ(a) for a in h.getAdjacents()])
             ) / 10
     def erode(self):
-        self.heights = { h : self._erode(h) for h in self.hexes }
+        self.hexz = { h : self._erode(h) for h in self.hexz }
